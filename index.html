@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html>
+	<title>BasherKella Archive</title>
+	<link href="css/normalize.css" rel="stylesheet" type="text/css"/>
+	<link href="css/datepicker.css" rel="stylesheet" type="text/css"/>	
+	<script type="text/javascript" src="js/jquery-1.7.1.min.js"></script>
+	<script type="text/javascript" src="js/jquery-ui-1.8.18.custom.min.js"></script>
+    <script type="text/javascript" src="js/jquery.appear.js"></script>
+	<script type="text/javascript" src="js/jquery.expander.min.js"></script>
+  
+	<script type="text/javascript">
+	
+	var toLoad = []
+	var toLoadAtOnce = 3
+	
+	var cDate = ""
+	var bkcontent = $("#bk-content")//document.getElementById('bk-content');
+	var loadingContent = false;
+	function screenFilled(){
+		var contentHeight = document.getElementById('bk-content').offsetHeight;
+		//var yOffset = window.pageYOffset; 
+		//var y = yOffset + window.innerHeight;
+		if(contentHeight < window.innerHeight*2){
+			return false
+		}else{
+			return true
+		}
+		
+	}
+	function drawMoreDivs(date,i,f){
+		
+		
+		date = typeof date !== 'undefined' ? date : cDate;
+		i = typeof i !== 'undefined' ? i : 0;
+		f = typeof f !== 'undefined' ? f : 0;
+		
+		var newD = new Date(Date.parse(date))
+		var site = "http://app.basherkella.com/archive/"
+		dtxt = newD.getFullYear()+"-"+pad((newD.getMonth()+1),2) + "-" + pad(newD.getDate(),2)
+		console.log("url "+dtxt)
+		if ((i< toLoadAtOnce && toLoad.length > 0) || !screenFilled()){
+			var o = toLoad.shift()
+			$.getJSON( site+"cacheTiny/"+dtxt+"/splitsTiny/"+$(o).data("jsonData").id+"json", function( data ) {
+				$(o).data("jsonDetails",data)
+				$(o).append(data.message)
+				if (data.type =="photo"){
+					var purl = data.picture
+					purl = purl.replace("_s\.","_n\.")
+					$(o).append('<img src="'+purl+'" class="im">')
+				}
+				$(o).removeClass('remove')
+				i++
+				drawMoreDivs(date,i)
+			}).fail(function() {
+				i++
+				f++
+				if (f < 5)
+					drawMoreDivs(date,i,f)
+			  });
+		}else{
+			$.force_appear()
+			setStatus()
+		}
+		
+		
+		
+		
+	//toLoad.shift()	
+	}
+	function drawMoreDivsOld(){
+		for (var i = 0; (i< toLoadAtOnce && toLoad.length > 0) || !screenFilled(); i++){
+			var o = toLoad.shift()
+			$(o).append($(o).data("jsonData").message)
+			if ($(o).data("jsonData").type =="photo"){
+				var purl = $(o).data("jsonData").picture
+				purl = purl.replace("_s\.","_n\.")
+				$(o).append('<img src="'+purl+'" class="im">')
+			}
+			$(o).removeClass('remove')
+			//$(o).removeClass('h')
+		}
+		$.force_appear()
+		setStatus()
+		
+	//toLoad.shift()	
+	}
+	function compare(a,b) {
+	  if (a.created_time < b.created_time)
+		 return -1;
+	  if (a.created_time > b.created_time)
+		return 1;
+	  return 0;
+	}
+	function pad(num, size) {
+		var s = num+"";
+		while (s.length < size) s = "0" + s;
+		return s;
+	}
+	var nn = 0
+	function isEven(value) {
+		if (value%2 == 0)
+			return true;
+		else
+			return false;
+	}
+	function formatData(json){
+		nn++
+		var nnn = nn
+		var o = $("<div></div>")
+		$(o).data("jsonData",json)
+		//
+		
+		$(o).addClass('h')
+		$(o).addClass('cell')
+		$(o).addClass('remove')
+		if (isEven(nn))
+			$(o).addClass('even')
+		else
+			$(o).addClass('odd')
+		/*$(o).on("appear",function(event, $all_appeared_elements){
+			console.log("appear "+nnn)
+			$(o).removeClass('h')
+		})
+		$(o).on("disappear",function(event, $all_appeared_elements){
+			console.log("disappear "+nnn)
+			$(o).addClass('h')
+		})*/
+		//$(o).append(json['message'])
+		//$(o).addClass('expandable')
+		/*$(o).ready(function(e) {
+            $(o).append($(o).data("jsonData").message)
+		})*/
+		//$(o).find('div.expendable').expender();
+		toLoad.push(o)
+		return o//("<div class='expandable'>"+json['message']+"</div>")
+	}
+	function loadData(date){
+		loadingContent = true
+		var d = date
+		var newD = new Date(Date.parse(date))
+		var site = "http://app.basherkella.com/archive/"
+		dtxt = newD.getFullYear()+"-"+pad((newD.getMonth()+1),2) + "-" + pad(newD.getDate(),2)
+		console.log("url "+dtxt)
+		$.getJSON( site+"cacheTiny/"+dtxt+"/tiny.json", function( data ) {
+			//var str = ""
+			var dObj = $('<div id="D'+d+'"></div>')
+			$(dObj).id = "D"+d
+			
+			
+			$(dObj).append('<div><h1>'+d+'</h1></div>')
+			//str += '<div id="D'+d+'">';
+			//str += '<div><h1>'+d+'</h1></div>';
+			//data.sort(compare)
+			for(i=0; i<data.length; i++){
+				var h = formatData(data[i])
+				//str += h;
+				$(dObj).append(h)
+			}
+			//str += '</div>';
+			
+			$("#bk-content").append(dObj);
+			
+			//$.force_appear()
+			drawMoreDivs(date)
+			//$('div.expandable').expander();
+		  /*var items = [];
+		  $.each( data, function( key, val ) {
+			items.push( "<li id='" + key + "'>" + val + "</li>" );
+		  });
+		  */
+		  
+		  console.log("Before Reset loadingContent: "+loadingContent)
+		  loadingContent = false
+		}).fail(function() {
+			$("#bk-content").append('<div id="D'+d+'">' +'<div><h1>'+d+'</h1></div>'+'</div>');
+			console.log("F Before Reset loadingContent: "+loadingContent)
+		  	loadingContent = false
+		  });
+		
+	}
+	function loadFirstContent(){
+		toLoad = []
+		//nn = 0
+		$("#bk-content").html("");
+		//bkcontent.innerHTML = '<div><h1>'+cDate+'</h1></div>';
+		loadData(cDate)
+	}
+	function drawNextDay(day){
+		//bkcontent.innerHTML += '<div><h1>'+day+'</h1></div>';
+		loadData(day)
+	}
+	</script>
+	<script type="text/javascript">
+	
+		$(function(){
+			
+			
+			$('#datepicker').datepicker({
+				inline: true,
+				//nextText: '&rarr;',
+				//prevText: '&larr;',
+				showOtherMonths: true,
+				//dateFormat: 'dd MM yy',
+				dayNamesMin: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+				//showOn: "button",
+				//buttonImage: "img/calendar-blue.png",
+				//buttonImageOnly: true,
+				onSelect: function(dateText){
+					var prevDate = $(this).data("prev")
+					var curDate = dateText;
+					if(prevDate != curDate){
+					  $(this).data("prev", curDate)
+					  cDate = $(this).val()
+					  loadFirstContent()
+					  //alert((new Date(Date.parse(curDate))).getDate())
+					}
+				}
+			});
+			$('#datepicker').data("prev", $(this).val());
+			cDate = $('#datepicker').val()
+			loadFirstContent()
+			//alert($('#datepicker').val())
+			$('div .h').appear();
+			$(document.body).on('appear', 'div .h', function(e, $affected) {
+				// this code is executed for each appeared element
+				//$(this).yellowFade();
+			
+				//$appeared.empty();
+				$affected.each(function() {
+				  //$appeared.append(this.innerHTML+"\n");
+				  $(this).removeClass('h1')
+				})
+			  });
+			
+			  $(document.body).on('disappear', 'div .h', function(e, $affected) {
+				// this code is executed for each disappeared element
+				//$disappeared.empty();
+				$affected.each(function() {
+				  //$disappeared.append(this.innerHTML+"\n");
+				  $(this).addClass('h1')
+				})
+			  });
+			
+		});
+		
+	</script>
+    <script type="text/javascript">
+
+
+function setStatus(){
+	var contentHeight = document.getElementById('bk-content').offsetHeight;
+	var yOffset = window.pageYOffset; 
+	var y = yOffset + window.innerHeight;
+	var status = document.getElementById('status');
+	status.innerHTML = contentHeight+" | "+y;
+}
+function yHandler(){
+	
+	// Watch video for line by line explanation of the code
+	// http://www.youtube.com/watch?v=eziREnZPml4
+	var contentHeight = document.getElementById('bk-content').offsetHeight;
+	var yOffset = window.pageYOffset; 
+	var y = yOffset + window.innerHeight + window.innerHeight/4;
+	if(y >= contentHeight){
+		// Ajax call to get more dynamic data goes here
+		if (toLoad.length > 0){
+			drawMoreDivs()
+		}else{
+			/*if(!loadingContent){
+				var newD = new Date(Date.parse(cDate))
+				newD.setDate(newD.getDate() -1);
+				cDate = (newD.getMonth()+1) + "/" + newD.getDate()+"/"+ newD.getFullYear()
+				drawNextDay(cDate);
+				//bkcontent.innerHTML += '<div class="newData"></div>';
+			}*/
+		}
+	}
+	var status = document.getElementById('status');
+	status.innerHTML = contentHeight+" | "+y;
+}
+window.onscroll = yHandler;
+</script>
+<style type="text/css">
+div#status{position:fixed; font-size:24px; top:230px}
+div#bk-content{width:490px; margin:0px auto; word-wrap: break-word; overflow:hidden;}
+.h2{ visibility:hidden}
+.remove{ display:none}
+.h{ }
+.h1{ }
+.cell {max-height:495px;overflow:auto; padding:10px 10px 10px 10px}
+.odd { background-color:rgba(255, 255, 255, 0.5);}
+.even { background-color:rgba(255, 255, 255, 0.25);}
+.im { max-height: 470px; max-width: 470px; }
+
+div.newData{height:1000px; background:#09F; margin:10px 0px;}
+</style>
+</head>
+<head>
+</head>
+<body>
+	<div id="datepicker"></div>
+    <div id="status">0 | 0</div>
+<div id="bk-content"><div style="height:2000px"></div></div>
+</body>
+</html>
