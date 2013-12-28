@@ -35,7 +35,7 @@
 		f = typeof f !== 'undefined' ? f : 0;
 		
 		var newD = new Date(Date.parse(date))
-		var site = "http://app.basherkella.com/archive/"
+		var site = "/"
 		dtxt = newD.getFullYear()+"-"+pad((newD.getMonth()+1),2) + "-" + pad(newD.getDate(),2)
 		console.log("url "+dtxt)
 		if ((i< toLoadAtOnce && toLoad.length > 0) || !screenFilled()){
@@ -138,7 +138,7 @@
 		loadingContent = true
 		var d = date
 		var newD = new Date(Date.parse(date))
-		var site = "http://app.basherkella.com/archive/"
+		var site = "/"
 		dtxt = newD.getFullYear()+"-"+pad((newD.getMonth()+1),2) + "-" + pad(newD.getDate(),2)
 		console.log("url "+dtxt)
 		$.getJSON( site+"cacheTiny/"+dtxt+"/tiny.json", function( data ) {
