@@ -40,7 +40,7 @@
 		console.log("url "+dtxt)
 		if ((i< toLoadAtOnce && toLoad.length > 0) || !screenFilled()){
 			var o = toLoad.shift()
-			$.getJSON( site+"cacheTiny/"+dtxt+"/splitsTiny/"+$(o).data("jsonData").id+"json", function( data ) {
+			$.getJSON( site+"cacheTiny/"+dtxt+"/splitsTiny/"+$(o).data("jsonData").id+".json", function( data ) {
 				$(o).data("jsonDetails",data)
 				$(o).append(data.message)
 				if (data.type =="photo"){
